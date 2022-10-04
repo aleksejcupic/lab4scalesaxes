@@ -10,3 +10,7 @@
 	font-family: sans-serif;
 	font-size: 11px;
 }
+
+.axis y-axis {
+    writing-mode: vertical-lr;
+}

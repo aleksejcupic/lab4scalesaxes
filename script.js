@@ -11,40 +11,54 @@ const width = 650 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
 function renderChart(data) {
-    var svg = d3.select(".chart").append("svg")
+    var svg = d3.select('.chart').append('svg')
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
-	  .append("g")
+	.append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // console.log(d3.extent(data.Income));
 
     const xScale = d3
         .scaleLinear()
-        .domain([d3.extent(data.Income)])
+        .domain([0, 120_000])
+        //.domain([d3.extent(data.Income)])
         .range([0, width]);
 
     const yScale = d3
         .scaleLinear()
-        .domain([d3.extent(data.LifeExpectancy)])
+        .domain([0, 100])
+        //.domain([d3.extent(data.LifeExpectancy)])
         .range([0, height]);
 
     const xAxis = d3.axisBottom()
-        .scale(xScale);
+        .scale(xScale)
+        .ticks(5, "s");
 
     const yAxis = d3.axisLeft()
         .scale(yScale);
 
     // Draw the axis
-    svg.append("g")
+    svg.append('g')
         .attr("class", "axis x-axis")
-        .call(xAxis);
+        .call(xAxis)
+        .append("text")
+        .attr('x', width)
+        .attr('y', 100)
+        .text("Income");
 
     svg.append('g')
         .attr('class', 'axis y-axis')
-        .call(yAxis);
+        .call(yAxis)
+        .append("text")
+        .attr('x', 0)
+        .attr('y', height)
+        .text("Life Expectancy");
 
-    console.log(xScale(incomeMax));
+    // var incomeMax = d3.extent(data.Income);
+    // console.log(incomeMax);
 
-    let circles = d3
+    let circles = svg
     .selectAll(".circle")
     .data(data)
     .enter()
@@ -52,7 +66,7 @@ function renderChart(data) {
     .attr("class", "circle")
     .attr('cx', d => xScale(d.Income))
     .attr('cy', d => yScale(d.LifeExpectancy))
-    .attr('r', 5)
+    .attr('r', d => Math.log(d.Population) / 4)
     .attr('stroke', 'black')
     .attr('opacity', 1)
     .attr('fill', function(d) {
@@ -72,5 +86,11 @@ function renderChart(data) {
             default:
               return 'black';
           }
+    })
+    .on("mouseenter", (event, d) => {
+        // show the tooltip
+    })
+    .on("mouseleave", (event, d) => {
+        // hide the tooltip
     });
 }
