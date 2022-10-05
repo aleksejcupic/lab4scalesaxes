@@ -1,10 +1,7 @@
 // lab 4 - Aleksej Cupic
 d3.csv('wealth-health-2014.csv', d3.autoType).then(data => {
-    var wealthHealthData = data;
-    renderChart(wealthHealthData);
+    renderChart(data);
 });
-
-// Country,LifeExpectancy,Income,Population,Region
 
 const margin = ({top: 20, right: 20, bottom: 20, left: 20});
 const width = 650 - margin.left - margin.right,
@@ -17,19 +14,21 @@ function renderChart(data) {
 	.append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    // console.log(d3.extent(data.Income));
+    let income = data.map(d => d.Income);
+    let lifeExpectancy = data.map(d => d.LifeExpectancy);
 
     const xScale = d3
         .scaleLinear()
-        .domain([0, 120_000])
-        //.domain([d3.extent(data.Income)])
+        .domain(d3.extent(income))
         .range([0, width]);
 
     const yScale = d3
         .scaleLinear()
-        .domain([0, 100])
-        //.domain([d3.extent(data.LifeExpectancy)])
-        .range([0, height]);
+        .domain(d3.extent(lifeExpectancy))
+        .range([height, 0]);
+
+    let keys = [...new Set(data.map(item => item.Region))];
+    const colorScale = d3.scaleOrdinal(d3.schemeTableau10).domain(keys);
 
     const xAxis = d3.axisBottom()
         .scale(xScale)
@@ -38,59 +37,82 @@ function renderChart(data) {
     const yAxis = d3.axisLeft()
         .scale(yScale);
 
-    // Draw the axis
     svg.append('g')
         .attr("class", "axis x-axis")
         .call(xAxis)
-        .append("text")
-        .attr('x', width)
+
+    svg.append("text")
+        .attr('x', width - 100)
         .attr('y', 100)
         .text("Income");
 
     svg.append('g')
         .attr('class', 'axis y-axis')
         .call(yAxis)
-        .append("text")
-        .attr('x', 0)
-        .attr('y', height)
-        .text("Life Expectancy");
 
-    // var incomeMax = d3.extent(data.Income);
-    // console.log(incomeMax);
+    svg.append("text")
+        .attr('x', 50)
+        .attr('y', height - 100)
+        .text("Life Expectancy")
+        .attr('style', 'writing-mode: vertical-lr');
+    
+    var SVG = d3.select(".legend");
+
+    var size = 20;
+    SVG.selectAll("rect")
+        .data(keys)
+        .enter()
+        .append("rect")
+        .attr("x", 100)
+        .attr("y", function(d, i) { return 100 + i * (size + 5)})
+        .attr("width", size)
+        .attr("height", size)
+        .style("fill", function(d) { return colorScale(d)});
+
+    // Add one dot in the legend for each name.
+    SVG.selectAll("text")
+        .data(keys)
+        .enter()
+        .append("text")
+        .attr("x", 100 + size * 1.2)
+        .attr("y", function(d,i){ return 100 + i * (size + 5) + (size / 2)})
+        .style("fill", function(d){ return colorScale(d)})
+        .text(function(d){ return d})
+        .attr("text-anchor", "left")
+        .style("alignment-baseline", "middle");
 
     let circles = svg
-    .selectAll(".circle")
-    .data(data)
-    .enter()
-    .append("circle")
-    .attr("class", "circle")
-    .attr('cx', d => xScale(d.Income))
-    .attr('cy', d => yScale(d.LifeExpectancy))
-    .attr('r', d => Math.log(d.Population) / 4)
-    .attr('stroke', 'black')
-    .attr('opacity', 1)
-    .attr('fill', function(d) {
-        switch(d.Region) {
-            case 'East Asia & Pacific':
-                return 'blue';
-            case 'South Asia':
-                return 'orange';
-            case 'America':
-                return 'red';
-            case 'Sub-Saharan Africa':
-                return 'cyan';
-            case 'Europe & Central Asia':
-                return 'green';
-            case 'Middle East & North Africa':
-                return 'yellow';
-            default:
-              return 'black';
-          }
-    })
-    .on("mouseenter", (event, d) => {
-        // show the tooltip
-    })
-    .on("mouseleave", (event, d) => {
-        // hide the tooltip
-    });
+        .selectAll(".circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "circle")
+        .attr('cx', d => xScale(d.Income))
+        .attr('cy', d => yScale(d.LifeExpectancy))
+        .attr('r', function(d) {
+            if (d.Population > 100_000_000)
+                return 7;
+            if (d.Population > 1_000_000)
+                return 4;
+            return 2;
+        })
+        .attr('stroke', 'black')
+        .attr('opacity', 1)
+        .attr('fill', d => colorScale(d.Region))
+        .on("mouseenter", (event, d) => {
+            const pos = d3.pointer(event, window); // pos = [x,y]
+            d3.select(".tooltip")
+                .html("Country: " + d.Country + 
+                    ",\nLife Expectancy: " + d.LifeExpectancy + 
+                    ",\nIncome: " + d.Income + 
+                    ",\nPopulation: " + d.Population + 
+                    ",\nRegion: " + d.Region)
+                .style("left", pos[0] + "px")
+                .style("top", pos[1] + "px")
+                .attr('style', 'display: block');
+        })
+        .on("mouseleave", (event, d) => {
+            d3.select(".tooltip")
+                .attr('style', 'display: none');
+        });
 }
