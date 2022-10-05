@@ -15,7 +15,13 @@
     writing-mode: vertical-lr;
 }
 
-.tooltip {
+.tooltip{
     position:fixed;
     display:none;
-  }
+    background-color: rgb(25, 25, 25);
+    border-radius: 5px;
+    font-size: 15px;
+    color: white;
+    padding: 10px;
+    opacity: 0.8;
+}
